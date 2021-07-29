@@ -48,35 +48,37 @@ def crawl(url, dest):
         print("Błędny URL")
 
 
-def without_threading_func(urls):
-    for url in urls:
-        crawl(url, 'without_threads.txt')
+def count(_from, _to):
+    while _from >= _to:
+        _from -= 1
 
 
-def with_threading_func(urls):
-    threads = []
-    for url in urls:
-        th = threading.Thread(target=crawl, args=(url, 'with_threads.txt'))
-        th.start()
-        threads.append(th)
+def without_threading_func():
+    count(400000,0)
 
-    for th in threads:
-        th.join()
+
+def with_threading_func():
+    th1 = threading.Thread(target=count, args=(400000,300000))
+    th2 = threading.Thread(target=count, args=(300000,200000))
+    th3 = threading.Thread(target=count, args=(200000, 100000))
+    th4 = threading.Thread(target=count, args=(100000, 0))
+
+    th1.start()
+    th2.start()
+    th3.start()
+    th4.start()
+
+    th1.join()
+    th2.join()
+    th3.join()
+    th4.join()
 
 
 
 if __name__ == '__main__':
-    wo_threading = "without_threading_func(urls)"
-    with_threading = "with_threading_func(urls)"
+    wo_threading = "without_threading_func()"
+    with_threading = "with_threading_func()"
 
-    setup = '''
-from __main__ import without_threading_func, with_threading_func
-    
-urls = [
-        "https://jsonplaceholder.typicode.com/comments/1",
-        "https://jsonplaceholder.typicode.com/comments/2",
-        "https://jsonplaceholder.typicode.com/comments/3"
-    ]
-    '''
+    setup = 'from __main__ import without_threading_func, with_threading_func'
     print("Bez wątków:", timeit.timeit(stmt=wo_threading, setup=setup, number=100))
     print("Z wątkami:", timeit.timeit(stmt=with_threading, setup=setup, number=100))
