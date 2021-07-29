@@ -1,3 +1,4 @@
+import multiprocessing
 import threading
 import time
 import timeit
@@ -74,11 +75,30 @@ def with_threading_func():
     th4.join()
 
 
+def with_multiprocessing_func():
+    th1 = multiprocessing.Process(target=count, args=(400000,300000))
+    th2 = multiprocessing.Process(target=count, args=(300000,200000))
+    th3 = multiprocessing.Process(target=count, args=(200000, 100000))
+    th4 = multiprocessing.Process(target=count, args=(100000, 0))
+
+    th1.start()
+    th2.start()
+    th3.start()
+    th4.start()
+
+    th1.join()
+    th2.join()
+    th3.join()
+    th4.join()
+
+
 
 if __name__ == '__main__':
     wo_threading = "without_threading_func()"
     with_threading = "with_threading_func()"
+    with_multiprocessing = "with_multiprocessing_func"
 
-    setup = 'from __main__ import without_threading_func, with_threading_func'
+    setup = 'from __main__ import without_threading_func, with_threading_func, with_multiprocessing_func'
     print("Bez wątków:", timeit.timeit(stmt=wo_threading, setup=setup, number=100))
     print("Z wątkami:", timeit.timeit(stmt=with_threading, setup=setup, number=100))
+    print("Z podprocesami:", timeit.timeit(stmt=with_multiprocessing, setup=setup, number=100))
