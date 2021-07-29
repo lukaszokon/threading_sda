@@ -1,82 +1,46 @@
+import threading
 import time
-import timeit
+import logging
+import random
+
+logging.basicConfig(level=logging.DEBUG, format='(%(threadName)-9s) %(message)s', )
 
 
-def print_cube(num):
-    time.sleep(5)
-    print(f'Cube: {num ** 3}')
+class Counter(object):
+    def __init__(self, start=0):
+        self.lock = threading.Lock()
+        self.value = start
+
+    def increment(self):
+        logging.debug('Waiting for a lock')
+        self.lock.acquire()
+        try:
+            logging.debug('Acquire a lock')
+            self.value = self.value + 1
+        finally:
+            logging.debug('Lock released')
+            self.lock.release()
 
 
-def print_square(num):
-    time.sleep(5)
-    return num ** 2
-
-
-def iterate_print(iter):
-    for item in iter:
-        print(item)
-
-import requests
-
-
-def crawl(url, dest):
-    try:
-        result = requests.get(url).text
-        with open(dest, 'a') as f:
-            f.write(result)
-
-    except requests.exceptions.RequestException:
-        print("Błędny URL")
-
-
-def count(_from, _to):
-    while _from >= _to:
-        _from -= 1
-
-
-def without_threading_func():
-    count(400000,0)
-
-
-def with_threading_func():
-    import threading
-    th1 = threading.Thread(target=count, args=(400000,300000))
-    th2 = threading.Thread(target=count, args=(300000,200000))
-    th3 = threading.Thread(target=count, args=(200000, 100000))
-    th4 = threading.Thread(target=count, args=(100000, 0))
-
-    th1.start()
-    th2.start()
-    th3.start()
-    th4.start()
-
-    th1.join()
-    th2.join()
-    th3.join()
-    th4.join()
-
-
-def with_multiprocessing_func():
-    import multiprocessing
-    p1 = multiprocessing.Process(target=count, args=(400000,200000))
-    p2 = multiprocessing.Process(target=count, args=(200000,0))
-
-    p1.start()
-    p2.start()
-
-    p1.join()
-    p2.join()
-
+def worker(counter_instance: Counter):
+    for i in range(2):
+        r = random.random()
+        logging.debug(f'Sleeping {round(r, 2)}')
+        time.sleep(r)
+        counter_instance.increment()
+    logging.debug('Done')
 
 
 if __name__ == '__main__':
+    counter = Counter()
+    threads = []
+    for i in range(2):
+        t = threading.Thread(target=worker, args=(counter,))
+        t.start()
+        threads.append(t)
 
-    wo_threading = "without_threading_func()"
-    with_threading = "with_threading_func()"
-    with_multiprocessing = "with_multiprocessing_func()"
+    logging.debug('Waiting for worker threads')
+    for t in threads:
+        t.join()
 
-
-    setup = 'from __main__ import without_threading_func, with_threading_func, with_multiprocessing_func'
-    print("Bez wątków:", timeit.timeit(stmt=wo_threading, setup=setup, number=100))
-    print("Z wątkami:", timeit.timeit(stmt=with_threading, setup=setup, number=100))
-    print("Z podprocesami:", timeit.timeit(stmt=with_multiprocessing, setup=setup, number=10))
+    logging.debug(f'Counter: {counter.value}')
