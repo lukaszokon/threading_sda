@@ -1,25 +1,5 @@
-import multiprocessing
-import threading
 import time
 import timeit
-
-
-class ThreadWithReturnValue(threading.Thread):
-    def __init__(self, target, args=(), kwargs=None):
-        if kwargs is None:
-            kwargs = {}
-        self.target = target
-        self.args = args
-        self.kwargs = kwargs
-        self.result = None
-        super().__init__()
-
-    def run(self):
-        self.result = self.target(*self.args, **self.kwargs)
-
-    def join(self, timeout=None):
-        super().join(timeout)
-        return self.result
 
 
 def print_cube(num):
@@ -59,6 +39,7 @@ def without_threading_func():
 
 
 def with_threading_func():
+    import threading
     th1 = threading.Thread(target=count, args=(400000,300000))
     th2 = threading.Thread(target=count, args=(300000,200000))
     th3 = threading.Thread(target=count, args=(200000, 100000))
@@ -76,29 +57,26 @@ def with_threading_func():
 
 
 def with_multiprocessing_func():
-    th1 = multiprocessing.Process(target=count, args=(400000,300000))
-    th2 = multiprocessing.Process(target=count, args=(300000,200000))
-    th3 = multiprocessing.Process(target=count, args=(200000, 100000))
-    th4 = multiprocessing.Process(target=count, args=(100000, 0))
+    import multiprocessing
+    p1 = multiprocessing.Process(target=count, args=(400000,200000))
+    p2 = multiprocessing.Process(target=count, args=(200000,0))
 
-    th1.start()
-    th2.start()
-    th3.start()
-    th4.start()
+    p1.start()
+    p2.start()
 
-    th1.join()
-    th2.join()
-    th3.join()
-    th4.join()
+    p1.join()
+    p2.join()
 
 
 
 if __name__ == '__main__':
+
     wo_threading = "without_threading_func()"
     with_threading = "with_threading_func()"
-    with_multiprocessing = "with_multiprocessing_func"
+    with_multiprocessing = "with_multiprocessing_func()"
+
 
     setup = 'from __main__ import without_threading_func, with_threading_func, with_multiprocessing_func'
     print("Bez wątków:", timeit.timeit(stmt=wo_threading, setup=setup, number=100))
     print("Z wątkami:", timeit.timeit(stmt=with_threading, setup=setup, number=100))
-    print("Z podprocesami:", timeit.timeit(stmt=with_multiprocessing, setup=setup, number=100))
+    print("Z podprocesami:", timeit.timeit(stmt=with_multiprocessing, setup=setup, number=10))
